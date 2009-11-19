@@ -1,0 +1,2 @@
+CouchDB
+httplib2<=0.4
