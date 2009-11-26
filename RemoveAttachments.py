@@ -401,6 +401,7 @@ class RemoveAttachments(object):
         Detects if the mail is already there (based on mailbox and message ID) - will not create duplicates.
         """
         doc_id = mailbox + "@@" + mail['message-id']
+        doc = {"_attachments": {}}
         if doc_id in self.db:
             if self.db[doc_id]['done'] == True:
                 logging.debug("Message is already in CouchDB")
@@ -411,10 +412,9 @@ class RemoveAttachments(object):
                 # and finishing uploading the attachments. so delte the old
                 # attempt and start again.
                 logging.warning("Incomplete upload detected, retrying...")
-                del self.db[doc_id]
+                doc = self.db[doc_id]
         else:
             logging.debug("Add mail to CouchDB")
-        doc = {"_attachments": {}}
         save_hdrs = ('to', 'from', 'date', 'subject', 'in-reply-to', 'references', 'message-id')
         for hdr in save_hdrs:
             if hdr in mail:
@@ -422,7 +422,6 @@ class RemoveAttachments(object):
         doc['mailbox'] = mailbox
         doc['_id'] = doc_id
         doc['done'] = False
-        print doc
         new_doc_id = self.db.create(doc)
 
         for part in mail.walk():
@@ -430,7 +429,11 @@ class RemoveAttachments(object):
             if attachment is missing:
                 continue
 
-            filename = get_filename_from_part(part)
+            payload = part.get_payload(decode=True)
+            if not payload:
+                continue
+
+            filename = str(get_filename_from_part(part)).replace('\n','')
             params = part.get_params()
             if len(params) > 0 and '/' in params[0][0]:
                 mimetype = params[0][0]
@@ -438,7 +441,7 @@ class RemoveAttachments(object):
                 mimetype = 'application/octet-stream'
 
             filename = str(filename)
-            self.db.put_attachment(self.db[new_doc_id], part.get_payload(decode=True), filename, mimetype)
+            self.db.put_attachment(self.db[new_doc_id], payload, filename, mimetype)
             logging.debug("Added attachment %s", filename)
 
         # modify document to mark it as complete
@@ -541,3 +544,4 @@ def doctests():
 
 if __name__ == "__main__":
     main()
+
