@@ -1,6 +1,7 @@
-#!/usr/bin/python
+#!/opt/bin/python
 # -*- coding: utf-8 -*-
 # Author: Daniel Drake, November 2009
+# Copyright HUDORA GmbH 2009
 
 import sys
 import logging
@@ -182,7 +183,9 @@ class RemoveAttachments(object):
         self.eat_more_attachments = eat_more_attachments or False
         self.only_mailbox = only_mailbox
         self.gmail = gmail or False
-
+        self.cdb_server = cdb_server
+        self.cdb_db = cdb_db
+        
         if cdb_server:
             cdb_db = cdb_db or "attachments"
             logging.debug("Connecting to CouchDB")
@@ -367,6 +370,7 @@ class RemoveAttachments(object):
             notice += "Content type: %s\n" % part.get_content_type()
             if doc_id:
                 notice += "Database document ID: %s\n" % doc_id
+                notice += "http://%s/%s/%s/%s\n" % (self.cdb_server, self.cdb_db, doc_id.replace('/', '%2f'), get_filename_from_part(part))
             part.set_payload(notice)
             for k, v in part.get_params():
                 part.del_param(k)
@@ -418,7 +422,7 @@ class RemoveAttachments(object):
         doc['mailbox'] = mailbox
         doc['_id'] = doc_id
         doc['done'] = False
-
+        print doc
         new_doc_id = self.db.create(doc)
 
         for part in mail.walk():
@@ -433,6 +437,7 @@ class RemoveAttachments(object):
             else:
                 mimetype = 'application/octet-stream'
 
+            filename = str(filename)
             self.db.put_attachment(self.db[new_doc_id], part.get_payload(decode=True), filename, mimetype)
             logging.debug("Added attachment %s", filename)
 
@@ -482,7 +487,8 @@ def main():
     parser.add_option("--couchdb-db", help="CouchDB database name (default: attachments)")
     parser.add_option("--before-date",
                       help="Only check messages sent before this date (format YYYY-MM-DD)")
-    parser.add_option("--min-size", help="Ignore mails smaller than this size, in kB")
+    parser.add_option("--min-size", default=5000,
+                      help="Ignore mails smaller than this size, in kB [%default]")
     parser.add_option("-r", "--remove", help="Remove attachments after processing", action="store_true")
     parser.add_option("--eat-more-attachments", help="Use looser criteria for detecting attachments",
                       action="store_true")
