@@ -11,6 +11,8 @@ import email.utils
 import couchdb.client
 import socket
 
+import hashlib
+
 from datetime import date
 from optparse import OptionParser
 from imaplib import IMAP4, IMAP4_SSL
@@ -31,6 +33,9 @@ def get_filename_from_part(part):
         filename = part.get_param('filename', missing, 'content-type')
         if filename is not missing:
             filename = email.utils.collapse_rfc2231_value(filename).strip()
+    
+    filename = str(filename).replace('\n','')
+    filename = re.sub('[^\x21-\x7E]*', '', filename)
     return filename
 
 
@@ -333,8 +338,8 @@ class RemoveAttachments(object):
         doc_id = None
 
         if 'message-id' not in mail:
-            logging.warning("Skipping mail %s: no Message-ID", uid)
-            return
+            mail['message-id'] = "%s@fakeid.hudora.biz" % hashlib.sha1(repr(mail._headers)).hexdigest()
+            logging.warning(" mail %s: no Message-ID, using fake-id %s", uid, mail['message-id'])
 
         logging.debug("Message-ID: %s", mail['message-id'])
 
@@ -345,7 +350,7 @@ class RemoveAttachments(object):
                 break
 
         if not found_attachment:
-            logging.debug("No attachments --> skip")
+            logging.debug("No attachments --> skip (%d bytes)" % len(str(mail)))
             return
 
         if self.db is not None:
@@ -400,7 +405,7 @@ class RemoveAttachments(object):
 
         Detects if the mail is already there (based on mailbox and message ID) - will not create duplicates.
         """
-        doc_id = mailbox + "@@" + mail['message-id']
+        doc_id = mailbox + "@@" + re.sub('[^\x21-\x7E]*', '', mail['message-id'])
         doc = {"_attachments": {}}
         if doc_id in self.db:
             if self.db[doc_id]['done'] == True:
@@ -433,14 +438,17 @@ class RemoveAttachments(object):
             if not payload:
                 continue
 
-            filename = str(get_filename_from_part(part)).replace('\n','')
+            filename = get_filename_from_part(part)
             params = part.get_params()
             if len(params) > 0 and '/' in params[0][0]:
                 mimetype = params[0][0]
             else:
                 mimetype = 'application/octet-stream'
 
-            filename = str(filename)
+            print len(payload)
+            print repr(filename)
+            print repr(mimetype)
+            print new_doc_id
             self.db.put_attachment(self.db[new_doc_id], payload, filename, mimetype)
             logging.debug("Added attachment %s", filename)
 
