@@ -1,0 +1,28 @@
+{% extends "intern/base_site.html" %}
+{% load i18n %}
+
+{% block stylesheet %}{% load adminmedia %}{% admin_media_prefix %}css/dashboard.css{% endblock %}
+{% block breadcrumbs %}<div class="breadcrumbs"><a href="/">Intranet</a>
+&rsaquo; Attachment Archiv<</div>{% endblock %}
+
+{% block content %}
+<div id="content-main">
+
+<form method="get">
+  Document-Id: <input name="query" width="100" />
+  <input type="submit" value="Suchen!" />
+</form>
+
+{{ query }}
+
+<p>
+  {% for row in results %}
+    <a href="{{ row.key|urlencode }}/">Nachricht</a>
+  {% endfor %}
+</p>
+
+{% if results %}<p><a href="?start={{ nextstart }}">N&auml;chste Seite &gt;</a></p>{% endif %}
+
+</div>
+{% endblock %}
+

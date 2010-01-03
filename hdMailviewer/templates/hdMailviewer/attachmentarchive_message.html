@@ -1,0 +1,39 @@
+{% extends "intern/base_site.html" %}
+{% load i18n %}
+
+{% block stylesheet %}{% load adminmedia %}{% admin_media_prefix %}css/dashboard.css{% endblock %}
+{% block breadcrumbs %}<div class="breadcrumbs"><a href="/">Intranet</a>
+&rsaquo; <a href="/attachmentarchive/">Attachment Archiv</a>
+&rsaquo; {{ doc.subject }}
+</div>{% endblock %}
+
+{% comment %}
+XXX: wird nie genutzt?!?!
+{% block bodyaddon %}onLoad=sf(){% endblock %}
+{% endcomment %}
+
+{% block content %}
+<div id="content-main">
+
+<!-- {{ doc }} -->
+
+<p>
+  <code>From:    </code> {{ doc.from }}<br/>
+  <code>To:      </code> {{ doc.to }}<br/>
+  <code>Date:    </code> {{ doc.date }}<br/>
+  <code>Subject: </code> {{ doc.subject }}<br/>
+  <code>Mailbox: </code> {{ doc.mailbox }}<br/>
+  <code>Datensatz:</code> {{ key }}<br/>
+</p>
+
+<h2>Anh&auml;nge</h2>
+ 
+<ul>
+{% for name, attachment in doc.attachments.items %}
+    <li><a href="attachment/{{ name|urlencode }}">{{ name }}</a> {{ attachment.length|filesizeformat }}</li>    
+{% endfor %}
+</ul>
+
+</div>
+{% endblock %}
+
