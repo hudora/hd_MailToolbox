@@ -20,6 +20,8 @@ from types import ListType, TupleType
 
 missing = object()
 
+excluded_uids = ["339"]
+
 
 def get_filename_from_part(part):
     """Get filename from a message part.
@@ -247,7 +249,12 @@ class RemoveAttachments(object):
             typ, msg = self.imap.fetch(num, '(UID)')
             if typ != 'OK':
                 logging.warning("FETCH UID not OK, skipping message %s", num)
-            uids.append(parse_uid(msg[0]))
+            else:
+                uid_nr = parse_uid(msg[0])
+                if uid_nr not in excluded_uids:
+                    uids.append(uid_nr)
+                else:
+                    logging.info("Skipping excluded UID %s", uid_nr)
 
         return uids
 
