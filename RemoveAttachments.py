@@ -35,9 +35,10 @@ def get_filename_from_part(part):
         filename = part.get_param('filename', missing, 'content-type')
         if filename is not missing:
             filename = email.utils.collapse_rfc2231_value(filename).strip()
-    
+
     filename = str(filename).replace('\n','')
     filename = re.sub('[^\x21-\x7E]*', '', filename)
+    filename = re.sub('^_', '', filename)
     return filename
 
 
@@ -192,7 +193,7 @@ class RemoveAttachments(object):
         self.gmail = gmail or False
         self.cdb_server = cdb_server
         self.cdb_db = cdb_db
-        
+
         if cdb_server:
             cdb_db = cdb_db or "attachments"
             logging.debug("Connecting to CouchDB")
