@@ -38,7 +38,7 @@ def get_filename_from_part(part):
 
     filename = str(filename).replace('\n','')
     filename = re.sub('[^\x21-\x7E]*', '', filename)
-    filename = re.sub('^_', '', filename)
+    filename = re.sub('^_+', '', filename)
     return filename
 
 
