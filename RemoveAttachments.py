@@ -20,7 +20,7 @@ from types import ListType, TupleType
 
 missing = object()
 
-excluded_uids = ["339"]
+excluded_uids = ["339", "18205", "11382", "22493", "24791","4196", "27970","28193", "9472"]
 
 
 def get_filename_from_part(part):
@@ -298,9 +298,13 @@ class RemoveAttachments(object):
             logging.debug("Retrieve mail with uid %s", uid)
             typ, msg = self.imap.uid('FETCH', uid, '(FLAGS INTERNALDATE BODY.PEEK[])')
             if typ != "OK":
-                raise Exception("FETCH not OK")
+                #raise Exception("FETCH not OK")
+                print 'Fetch not OK: %s', uid
+                continue
             if len(msg) < 1 or len(msg[0]) < 2:
-                raise Exception("Malformed FETCH response")
+                #raise Exception("Malformed FETCH response")
+                print 'Malformed FETCH response'
+                continue
             try:
                 flags = None
                 for item in msg:
